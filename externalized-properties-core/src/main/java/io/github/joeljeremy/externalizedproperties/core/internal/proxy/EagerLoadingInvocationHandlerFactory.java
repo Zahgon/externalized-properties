@@ -1,7 +1,6 @@
 package io.github.joeljeremy.externalizedproperties.core.internal.proxy;
 
 import static io.github.joeljeremy.externalizedproperties.core.internal.Arguments.requireNonNull;
-
 import io.github.joeljeremy.externalizedproperties.core.CacheStrategy;
 import io.github.joeljeremy.externalizedproperties.core.Converter;
 import io.github.joeljeremy.externalizedproperties.core.Resolver;
@@ -14,47 +13,38 @@ import io.github.joeljeremy.externalizedproperties.core.internal.caching.WeakCon
 import io.github.joeljeremy.externalizedproperties.core.internal.caching.WeakHashMapCacheStrategy;
 import java.lang.reflect.Method;
 
-/** The factory for {@link EagerLoadingInvocationHandler}. */
+/**
+ * The factory for {@link EagerLoadingInvocationHandler}.
+ */
 @Internal
 public class EagerLoadingInvocationHandlerFactory implements InvocationHandlerFactory {
 
-  private final InvocationHandlerFactory decorated;
-  private final CacheStrategy<InvocationCacheKey, Object> cacheStrategy;
+    private final InvocationHandlerFactory decorated;
 
-  /**
-   * Constructor.
-   *
-   * @param decorated The decorated {@link InvocationHandlerFactory} instance.
-   * @param cacheStrategy The cache strategy keyed by a {@link InvocationCacheKey} and whose values
-   *     are the resolved properties. It is recommended that the {@link CacheStrategy}
-   *     implementation only holds weak references to the {@link InvocationCacheKey} due to it
-   *     holding a reference to the invoked {@link Method}. This is in order to avoid possible leaks
-   *     and class unloading issues.
-   * @see WeakConcurrentHashMapCacheStrategy
-   * @see WeakHashMapCacheStrategy
-   */
-  public EagerLoadingInvocationHandlerFactory(
-      InvocationHandlerFactory decorated, CacheStrategy<InvocationCacheKey, Object> cacheStrategy) {
-    this.decorated = requireNonNull(decorated, "decorated");
-    this.cacheStrategy = requireNonNull(cacheStrategy, "cacheStrategy");
-  }
+    private final CacheStrategy<InvocationCacheKey, Object> cacheStrategy;
 
-  /** {@inheritDoc} */
-  @Override
-  public EagerLoadingInvocationHandler create(
-      Class<?> proxyInterface,
-      Resolver rootResolver,
-      Converter<?> rootConverter,
-      VariableExpander variableExpander,
-      InvocationContextFactory invocationContextFactory) {
-    return EagerLoadingInvocationHandler.eagerLoad(
-        decorated.create(
-            proxyInterface,
-            rootResolver,
-            rootConverter,
-            variableExpander,
-            invocationContextFactory),
-        cacheStrategy,
-        proxyInterface);
-  }
+    /**
+     * Constructor.
+     *
+     * @param decorated The decorated {@link InvocationHandlerFactory} instance.
+     * @param cacheStrategy The cache strategy keyed by a {@link InvocationCacheKey} and whose values
+     *     are the resolved properties. It is recommended that the {@link CacheStrategy}
+     *     implementation only holds weak references to the {@link InvocationCacheKey} due to it
+     *     holding a reference to the invoked {@link Method}. This is in order to avoid possible leaks
+     *     and class unloading issues.
+     * @see WeakConcurrentHashMapCacheStrategy
+     * @see WeakHashMapCacheStrategy
+     */
+    public EagerLoadingInvocationHandlerFactory(InvocationHandlerFactory decorated, CacheStrategy<InvocationCacheKey, Object> cacheStrategy) {
+        this.decorated = requireNonNull(decorated, "decorated");
+        this.cacheStrategy = requireNonNull(cacheStrategy, "cacheStrategy");
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public EagerLoadingInvocationHandler create(Class<?> proxyInterface, Resolver rootResolver, Converter<?> rootConverter, VariableExpander variableExpander, InvocationContextFactory invocationContextFactory) {
+        throw new UnsupportedOperationException("STUB: not implemented");
+    }
 }

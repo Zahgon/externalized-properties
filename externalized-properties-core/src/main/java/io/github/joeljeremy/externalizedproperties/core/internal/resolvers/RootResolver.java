@@ -1,7 +1,6 @@
 package io.github.joeljeremy.externalizedproperties.core.internal.resolvers;
 
 import static io.github.joeljeremy.externalizedproperties.core.internal.Arguments.requireNonNull;
-
 import io.github.joeljeremy.externalizedproperties.core.InvocationContext;
 import io.github.joeljeremy.externalizedproperties.core.Processor;
 import io.github.joeljeremy.externalizedproperties.core.Resolver;
@@ -20,30 +19,31 @@ import java.util.Optional;
  */
 @Internal
 public class RootResolver implements Resolver {
-  private final Resolver resolver;
-  private final RootProcessor rootProcessor;
 
-  /**
-   * Constructor.
-   *
-   * @apiNote If ordering of resolvers is important, callers of this constructor must use a {@link
-   *     Collection} implementation that supports ordering such as {@link List}.
-   * @param resolvers The collection of {@link Resolver}s to resolve properties from.
-   * @param rootProcessor The root processor.
-   */
-  public RootResolver(Collection<Resolver> resolvers, RootProcessor rootProcessor) {
-    requireNonNull(resolvers, "resolvers");
-    requireNonNull(rootProcessor, "rootProcessor");
+    private final Resolver resolver;
 
-    this.resolver = CompositeResolver.flatten(resolvers);
-    this.rootProcessor = rootProcessor;
-  }
+    private final RootProcessor rootProcessor;
 
-  /** {@inheritDoc} */
-  @Override
-  public Optional<String> resolve(InvocationContext context, String propertyName) {
-    return resolver
-        .resolve(context, propertyName)
-        .map(resolved -> rootProcessor.process(context, resolved));
-  }
+    /**
+     * Constructor.
+     *
+     * @apiNote If ordering of resolvers is important, callers of this constructor must use a {@link
+     *     Collection} implementation that supports ordering such as {@link List}.
+     * @param resolvers The collection of {@link Resolver}s to resolve properties from.
+     * @param rootProcessor The root processor.
+     */
+    public RootResolver(Collection<Resolver> resolvers, RootProcessor rootProcessor) {
+        requireNonNull(resolvers, "resolvers");
+        requireNonNull(rootProcessor, "rootProcessor");
+        this.resolver = CompositeResolver.flatten(resolvers);
+        this.rootProcessor = rootProcessor;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public Optional<String> resolve(InvocationContext context, String propertyName) {
+        throw new UnsupportedOperationException("STUB: not implemented");
+    }
 }

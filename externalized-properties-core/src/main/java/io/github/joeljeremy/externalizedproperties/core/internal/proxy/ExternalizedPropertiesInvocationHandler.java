@@ -1,7 +1,6 @@
 package io.github.joeljeremy.externalizedproperties.core.internal.proxy;
 
 import static io.github.joeljeremy.externalizedproperties.core.internal.Arguments.requireNonNull;
-
 import io.github.joeljeremy.externalizedproperties.core.Converter;
 import io.github.joeljeremy.externalizedproperties.core.ConverterFacade;
 import io.github.joeljeremy.externalizedproperties.core.InvocationArguments;
@@ -22,231 +21,188 @@ import java.lang.reflect.Type;
 import java.util.Optional;
 import org.jspecify.annotations.Nullable;
 
-/** The core invocation handler for Externalized Properties. */
+/**
+ * The core invocation handler for Externalized Properties.
+ */
 @Internal
 public class ExternalizedPropertiesInvocationHandler implements InvocationHandler {
-  private static final Object[] EMPTY_ARGS = new Object[0];
 
-  private final Resolver rootResolver;
-  private final Converter<?> rootConverter;
-  private final VariableExpander variableExpander;
-  private final InvocationContextFactory invocationContextFactory;
+    private static final Object[] EMPTY_ARGS = new Object[0];
 
-  /**
-   * Constructor.
-   *
-   * @param rootResolver The root resolver.
-   * @param rootConverter The root converter.
-   * @param variableExpander The variable expander.
-   * @param invocationContextFactory The proxy method factory.
-   */
-  public ExternalizedPropertiesInvocationHandler(
-      Resolver rootResolver,
-      Converter<?> rootConverter,
-      VariableExpander variableExpander,
-      InvocationContextFactory invocationContextFactory) {
-    this.rootResolver = requireNonNull(rootResolver, "rootResolver");
-    this.rootConverter = requireNonNull(rootConverter, "rootConverter");
-    this.variableExpander = requireNonNull(variableExpander, "variableExpander");
-    this.invocationContextFactory =
-        requireNonNull(invocationContextFactory, "invocationContextFactory");
-  }
+    private final Resolver rootResolver;
 
-  /** {@inheritDoc} */
-  @Override
-  public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-    // args is null instead of an empty array if there are no method parameters...
-    // Let's change that to an empty array.
-    args = args == null ? EMPTY_ARGS : args;
+    private final Converter<?> rootConverter;
 
-    // Handle invocations to native Object methods:
-    // toString, equals, hashCode
-    Object objectMethodResult = handleIfObjectMethod(proxy, method, args);
-    if (objectMethodResult != null) {
-      return objectMethodResult;
+    private final VariableExpander variableExpander;
+
+    private final InvocationContextFactory invocationContextFactory;
+
+    /**
+     * Constructor.
+     *
+     * @param rootResolver The root resolver.
+     * @param rootConverter The root converter.
+     * @param variableExpander The variable expander.
+     * @param invocationContextFactory The proxy method factory.
+     */
+    public ExternalizedPropertiesInvocationHandler(Resolver rootResolver, Converter<?> rootConverter, VariableExpander variableExpander, InvocationContextFactory invocationContextFactory) {
+        this.rootResolver = requireNonNull(rootResolver, "rootResolver");
+        this.rootConverter = requireNonNull(rootConverter, "rootConverter");
+        this.variableExpander = requireNonNull(variableExpander, "variableExpander");
+        this.invocationContextFactory = requireNonNull(invocationContextFactory, "invocationContextFactory");
     }
 
-    InvocationContext context = invocationContextFactory.create(proxy, method, args);
-
-    // @ConverterFacade handling
-    if (context.method().hasAnnotation(ConverterFacade.class)) {
-      return handleConverterFacade(context);
-    }
-    // @VariableExpanderFacade handling.
-    else if (context.method().hasAnnotation(VariableExpanderFacade.class)) {
-      return handleVariableExpanderFacade(context);
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+        throw new UnsupportedOperationException("STUB: not implemented");
     }
 
-    // Resolve property (@ExternalizedProperty and @ResolverFacade handling)
-    return resolveProperty(context, proxy, method, args);
-  }
-
-  /**
-   * Resolve property.
-   *
-   * @param context The invocation context.
-   * @param proxy The proxy instance that the method was invoked on.
-   * @param method The invoked method.
-   * @param args The invocation arguments.
-   * @return The resolved property.
-   * @throws Throwable if an exception occurred while resolving the property.
-   */
-  private Object resolveProperty(
-      InvocationContext context, Object proxy, Method method, Object[] args) throws Throwable {
-    String externalizedPropertyName = ExternalizedPropertyName.fromInvocationContext(context);
-
-    String expandedName = variableExpander.expandVariables(context, externalizedPropertyName);
-
-    Optional<Object> result =
-        rootResolver
-            .resolve(context, expandedName)
-            .map(resolved -> convert(context, resolved, determineTargetType(context)));
-
-    if (result.isEmpty()) {
-      return determineDefaultValueOrThrow(context, proxy, method, args);
+    /**
+     * Resolve property.
+     *
+     * @param context The invocation context.
+     * @param proxy The proxy instance that the method was invoked on.
+     * @param method The invoked method.
+     * @param args The invocation arguments.
+     * @return The resolved property.
+     * @throws Throwable if an exception occurred while resolving the property.
+     */
+    private Object resolveProperty(InvocationContext context, Object proxy, Method method, Object[] args) throws Throwable {
+        String externalizedPropertyName = ExternalizedPropertyName.fromInvocationContext(context);
+        String expandedName = variableExpander.expandVariables(context, externalizedPropertyName);
+        Optional<Object> result = rootResolver.resolve(context, expandedName).map(resolved -> convert(context, resolved, determineTargetType(context)));
+        if (result.isEmpty()) {
+            return determineDefaultValueOrThrow(context, proxy, method, args);
+        }
+        return result.get();
     }
 
-    return result.get();
-  }
-
-  /**
-   * Handle invocation of proxy method annotated with {@link VariableExpanderFacade}.
-   *
-   * @param context The invocation context.
-   * @return The expanded value.
-   */
-  private String handleVariableExpanderFacade(InvocationContext context) {
-    // No need to validate. Already validated when proxy was built.
-    String valueToExpand = (String) context.arguments().getOrThrow(0);
-    return variableExpander.expandVariables(context, valueToExpand);
-  }
-
-  /**
-   * Handle invocation of proxy method annotated with {@link ConverterFacade}.
-   *
-   * @param context The invocation context.
-   * @return The converted value.
-   */
-  private Object handleConverterFacade(InvocationContext context) {
-    // No need to validate. Already validated when proxy was built.
-    String valueToConvert = (String) context.arguments().getOrThrow(0);
-    Type targetType = determineTargetType(context);
-    return convert(context, valueToConvert, targetType);
-  }
-
-  /**
-   * Convert value to target type.
-   *
-   * @param context The invocation context.
-   * @param valueToConvert The value to convert.
-   * @param targetType The target type of the conversion.
-   * @return The converted value.
-   */
-  private Object convert(InvocationContext context, String valueToConvert, Type targetType) {
-    return rootConverter.convert(context, valueToConvert, targetType).value();
-  }
-
-  /**
-   * Determine a default value for the externalized property method or throw. This will attempt to
-   * do the following:
-   *
-   * <ol>
-   *   <li>Invoke the method if it's a default interface method and return the value.
-   *   <li>Return {@link Optional#empty()} if the method return type is an {@link Optional}.
-   *   <li>Throw an {@link UnresolvedPropertyException}.
-   * </ol>
-   *
-   * @param context The proxy method invocation context.
-   * @param proxy The proxy.
-   * @param method The proxy method.
-   * @param args The arguments passed to the method.
-   * @return The default value that shall be returned by the method.
-   * @throws UnresolvedPropertyException if a default value cannot be determined.
-   * @throws Throwable if an exception occurred while invoking default method interface.
-   */
-  private Object determineDefaultValueOrThrow(
-      InvocationContext context, Object proxy, Method method, Object[] args) throws Throwable {
-    if (method.isDefault()) {
-      return invokeDefaultInterfaceMethod(proxy, method, args);
+    /**
+     * Handle invocation of proxy method annotated with {@link VariableExpanderFacade}.
+     *
+     * @param context The invocation context.
+     * @return The expanded value.
+     */
+    private String handleVariableExpanderFacade(InvocationContext context) {
+        // No need to validate. Already validated when proxy was built.
+        String valueToExpand = (String) context.arguments().getOrThrow(0);
+        return variableExpander.expandVariables(context, valueToExpand);
     }
 
-    if (Optional.class.equals(method.getReturnType())) {
-      return Optional.empty();
+    /**
+     * Handle invocation of proxy method annotated with {@link ConverterFacade}.
+     *
+     * @param context The invocation context.
+     * @return The converted value.
+     */
+    private Object handleConverterFacade(InvocationContext context) {
+        // No need to validate. Already validated when proxy was built.
+        String valueToConvert = (String) context.arguments().getOrThrow(0);
+        Type targetType = determineTargetType(context);
+        return convert(context, valueToConvert, targetType);
     }
 
-    String externalizedPropertyName = ExternalizedPropertyName.fromInvocationContext(context);
-
-    throw new UnresolvedPropertyException(
-        externalizedPropertyName,
-        String.format(
-            "Failed to resolve property '%s' for proxy method (%s). "
-                + "To prevent exceptions when a property cannot be resolved, "
-                + "consider changing proxy interface method's return type to an Optional.",
-            externalizedPropertyName, method.toGenericString()));
-  }
-
-  /**
-   * Invoke the default interface method.
-   *
-   * @param proxy The proxy.
-   * @param method The proxy method.
-   * @param args The arguments to pass to the default interface method.
-   * @return The result of the default interface method.
-   * @throws Throwable if an exception occurred while creating the default interface method handler.
-   */
-  private Object invokeDefaultInterfaceMethod(Object proxy, Method method, Object[] args)
-      throws Throwable {
-    DefaultInterfaceMethodHandler handler = DefaultInterfaceMethodHandlerFactory.create(method);
-    return handler.invoke(proxy, args);
-  }
-
-  // Same handling for @ResolverFacade and @ConverterFacade.
-  private static Type determineTargetType(InvocationContext context) {
-    InvocationArguments invocationArgs = context.arguments();
-    Type targetType = context.method().returnType();
-    if (invocationArgs.count() < 2) {
-      return targetType;
+    /**
+     * Convert value to target type.
+     *
+     * @param context The invocation context.
+     * @param valueToConvert The value to convert.
+     * @param targetType The target type of the conversion.
+     * @return The converted value.
+     */
+    private Object convert(InvocationContext context, String valueToConvert, Type targetType) {
+        return rootConverter.convert(context, valueToConvert, targetType).value();
     }
 
-    // Target type was provided as second parameter.
-    Object arg = invocationArgs.getOrThrow(1);
-    if (arg instanceof TypeReference<?>) {
-      return ((TypeReference<?>) arg).type();
+    /**
+     * Determine a default value for the externalized property method or throw. This will attempt to
+     * do the following:
+     *
+     * <ol>
+     *   <li>Invoke the method if it's a default interface method and return the value.
+     *   <li>Return {@link Optional#empty()} if the method return type is an {@link Optional}.
+     *   <li>Throw an {@link UnresolvedPropertyException}.
+     * </ol>
+     *
+     * @param context The proxy method invocation context.
+     * @param proxy The proxy.
+     * @param method The proxy method.
+     * @param args The arguments passed to the method.
+     * @return The default value that shall be returned by the method.
+     * @throws UnresolvedPropertyException if a default value cannot be determined.
+     * @throws Throwable if an exception occurred while invoking default method interface.
+     */
+    private Object determineDefaultValueOrThrow(InvocationContext context, Object proxy, Method method, Object[] args) throws Throwable {
+        if (method.isDefault()) {
+            return invokeDefaultInterfaceMethod(proxy, method, args);
+        }
+        if (Optional.class.equals(method.getReturnType())) {
+            return Optional.empty();
+        }
+        String externalizedPropertyName = ExternalizedPropertyName.fromInvocationContext(context);
+        throw new UnresolvedPropertyException(externalizedPropertyName, String.format("Failed to resolve property '%s' for proxy method (%s). " + "To prevent exceptions when a property cannot be resolved, " + "consider changing proxy interface method's return type to an Optional.", externalizedPropertyName, method.toGenericString()));
     }
 
-    // Safe to cast as only allowed types are: TypeReference, Class, and Type.
-    // Class is a subclass of Type. If new target types are supported, add it
-    // here or else a ClassCastException will get thrown.
-    return (Type) arg;
-  }
-
-  // Avoid invoking proxy object methods to avoid recursion.
-  private static @Nullable Object handleIfObjectMethod(Object proxy, Method method, Object[] args) {
-    if (method.getParameterCount() == 0) {
-      if ("toString".equals(method.getName())) {
-        return proxyToString(proxy);
-      } else if ("hashCode".equals(method.getName())) {
-        return proxyHashCode(proxy);
-      }
-    } else if (method.getParameterCount() == 1
-        && "equals".equals(method.getName())
-        && Object.class.equals(method.getParameterTypes()[0])) {
-      return proxyEquals(proxy, args);
+    /**
+     * Invoke the default interface method.
+     *
+     * @param proxy The proxy.
+     * @param method The proxy method.
+     * @param args The arguments to pass to the default interface method.
+     * @return The result of the default interface method.
+     * @throws Throwable if an exception occurred while creating the default interface method handler.
+     */
+    private Object invokeDefaultInterfaceMethod(Object proxy, Method method, Object[] args) throws Throwable {
+        DefaultInterfaceMethodHandler handler = DefaultInterfaceMethodHandlerFactory.create(method);
+        return handler.invoke(proxy, args);
     }
 
-    return null;
-  }
+    // Same handling for @ResolverFacade and @ConverterFacade.
+    private static Type determineTargetType(InvocationContext context) {
+        InvocationArguments invocationArgs = context.arguments();
+        Type targetType = context.method().returnType();
+        if (invocationArgs.count() < 2) {
+            return targetType;
+        }
+        // Target type was provided as second parameter.
+        Object arg = invocationArgs.getOrThrow(1);
+        if (arg instanceof TypeReference<?>) {
+            return ((TypeReference<?>) arg).type();
+        }
+        // Safe to cast as only allowed types are: TypeReference, Class, and Type.
+        // Class is a subclass of Type. If new target types are supported, add it
+        // here or else a ClassCastException will get thrown.
+        return (Type) arg;
+    }
 
-  private static int proxyHashCode(Object proxy) {
-    return System.identityHashCode(proxy);
-  }
+    // Avoid invoking proxy object methods to avoid recursion.
+    @Nullable
+    private static Object handleIfObjectMethod(Object proxy, Method method, Object[] args) {
+        if (method.getParameterCount() == 0) {
+            if ("toString".equals(method.getName())) {
+                return proxyToString(proxy);
+            } else if ("hashCode".equals(method.getName())) {
+                return proxyHashCode(proxy);
+            }
+        } else if (method.getParameterCount() == 1 && "equals".equals(method.getName()) && Object.class.equals(method.getParameterTypes()[0])) {
+            return proxyEquals(proxy, args);
+        }
+        return null;
+    }
 
-  // Only do reference equality.
-  private static boolean proxyEquals(Object proxy, Object[] args) {
-    return proxy == args[0];
-  }
+    private static int proxyHashCode(Object proxy) {
+        return System.identityHashCode(proxy);
+    }
 
-  private static String proxyToString(Object proxy) {
-    return proxy.getClass().getName() + '@' + Integer.toHexString(proxyHashCode(proxy));
-  }
+    // Only do reference equality.
+    private static boolean proxyEquals(Object proxy, Object[] args) {
+        return proxy == args[0];
+    }
+
+    private static String proxyToString(Object proxy) {
+        return proxy.getClass().getName() + '@' + Integer.toHexString(proxyHashCode(proxy));
+    }
 }

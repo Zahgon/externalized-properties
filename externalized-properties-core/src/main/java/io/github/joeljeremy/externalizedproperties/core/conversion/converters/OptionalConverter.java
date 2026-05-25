@@ -16,59 +16,40 @@ import java.util.Optional;
  * to an Optional is natively supported.
  */
 public class OptionalConverter implements Converter<Optional<?>> {
-  /** {@inheritDoc} */
-  @Override
-  public boolean canConvertTo(Class<?> targetType) {
-    return Optional.class.equals(targetType);
-  }
 
-  /** {@inheritDoc} */
-  @Override
-  public ConversionResult<Optional<?>> convert(
-      InvocationContext context, String valueToConvert, Type targetType) {
-    Type[] genericTypeParams = TypeUtilities.getTypeParameters(targetType);
-
-    // Assume initially as Optional of string type.
-    Type targetOptionalType = String.class;
-    if (genericTypeParams.length > 0) {
-      // Do not allow Optional<T>, Optional<T extends ...>, etc.
-      targetOptionalType = throwIfTypeVariable(genericTypeParams[0]);
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public boolean canConvertTo(Class<?> targetType) {
+        throw new UnsupportedOperationException("STUB: not implemented");
     }
 
-    if (valueToConvert.isEmpty()) {
-      return ConversionResult.of(Optional.empty());
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public ConversionResult<Optional<?>> convert(InvocationContext context, String valueToConvert, Type targetType) {
+        throw new UnsupportedOperationException("STUB: not implemented");
     }
 
-    Class<?> rawTargetOptionalType = TypeUtilities.getRawType(targetOptionalType);
-
-    // If Optional<String> or Optional<Object>, return String value.
-    if (String.class.equals(rawTargetOptionalType) || Object.class.equals(rawTargetOptionalType)) {
-      return ConversionResult.of(Optional.of(valueToConvert));
+    private Optional<?> convertToOptionalType(InvocationContext context, String valueToConvert, Type optionalGenericTypeParameter) {
+        ConverterProxy rootConverter = context.externalizedProperties().initialize(ConverterProxy.class);
+        Object converted = rootConverter.convert(valueToConvert, optionalGenericTypeParameter);
+        // Convert property and wrap in Optional.
+        return Optional.ofNullable(converted);
     }
 
-    return ConversionResult.of(convertToOptionalType(context, valueToConvert, targetOptionalType));
-  }
-
-  private Optional<?> convertToOptionalType(
-      InvocationContext context, String valueToConvert, Type optionalGenericTypeParameter) {
-    ConverterProxy rootConverter =
-        context.externalizedProperties().initialize(ConverterProxy.class);
-
-    Object converted = rootConverter.convert(valueToConvert, optionalGenericTypeParameter);
-    // Convert property and wrap in Optional.
-    return Optional.ofNullable(converted);
-  }
-
-  private Type throwIfTypeVariable(Type optionalGenericTypeParameter) {
-    if (TypeUtilities.isTypeVariable(optionalGenericTypeParameter)) {
-      throw new ConversionException("Type variables e.g. Optional<T> are not supported.");
+    private Type throwIfTypeVariable(Type optionalGenericTypeParameter) {
+        if (TypeUtilities.isTypeVariable(optionalGenericTypeParameter)) {
+            throw new ConversionException("Type variables e.g. Optional<T> are not supported.");
+        }
+        return optionalGenericTypeParameter;
     }
 
-    return optionalGenericTypeParameter;
-  }
+    private static interface ConverterProxy {
 
-  private static interface ConverterProxy {
-    @ConverterFacade
-    Object convert(String valueToConvert, Type targetType);
-  }
+        @ConverterFacade
+        Object convert(String valueToConvert, Type targetType);
+    }
 }

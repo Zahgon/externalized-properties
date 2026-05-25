@@ -14,51 +14,36 @@ import java.time.format.DateTimeParseException;
  */
 public class DurationConverter implements Converter<Duration> {
 
-  /** {@inheritDoc} */
-  @Override
-  public boolean canConvertTo(Class<?> targetType) {
-    return Duration.class.equals(targetType);
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public ConversionResult<Duration> convert(
-      InvocationContext context, String valueToConvert, Type targetType) {
-    if (is8601DurationFormat(valueToConvert)) {
-      try {
-        // Handle as ISO-8601 duration format.
-        return ConversionResult.of(Duration.parse(valueToConvert));
-      } catch (DateTimeParseException e) {
-        throw new ConversionException(
-            String.format("Invalid ISO 8601 duration format: %s", valueToConvert), e);
-      }
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public boolean canConvertTo(Class<?> targetType) {
+        throw new UnsupportedOperationException("STUB: not implemented");
     }
 
-    try {
-      // Expect value in milliseconds.
-      long durationInMillis = Long.parseLong(valueToConvert);
-      return ConversionResult.of(Duration.ofMillis(durationInMillis));
-    } catch (NumberFormatException e) {
-      throw new ConversionException(
-          String.format("Value must be a number (in milliseconds): %s", valueToConvert));
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public ConversionResult<Duration> convert(InvocationContext context, String valueToConvert, Type targetType) {
+        throw new UnsupportedOperationException("STUB: not implemented");
     }
-  }
 
-  private static boolean is8601DurationFormat(String valueToConvert) {
-    if (valueToConvert.length() > 0) {
-      char firstChar = Character.toUpperCase(valueToConvert.charAt(0));
-      if (firstChar == 'P') {
-        return true;
-      }
-
-      if ((firstChar == '+' || firstChar == '-') && valueToConvert.length() > 1) {
-        char secondChar = Character.toUpperCase(valueToConvert.charAt(1));
-        if (secondChar == 'P') {
-          // +P or -P
-          return true;
+    private static boolean is8601DurationFormat(String valueToConvert) {
+        if (valueToConvert.length() > 0) {
+            char firstChar = Character.toUpperCase(valueToConvert.charAt(0));
+            if (firstChar == 'P') {
+                return true;
+            }
+            if ((firstChar == '+' || firstChar == '-') && valueToConvert.length() > 1) {
+                char secondChar = Character.toUpperCase(valueToConvert.charAt(1));
+                if (secondChar == 'P') {
+                    // +P or -P
+                    return true;
+                }
+            }
         }
-      }
+        return false;
     }
-    return false;
-  }
 }

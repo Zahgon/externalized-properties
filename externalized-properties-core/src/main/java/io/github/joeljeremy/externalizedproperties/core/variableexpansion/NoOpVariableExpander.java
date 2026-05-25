@@ -9,19 +9,27 @@ import io.github.joeljeremy.externalizedproperties.core.VariableExpander;
  */
 public class NoOpVariableExpander implements VariableExpander {
 
-  /** Singleton instance. */
-  public static final NoOpVariableExpander INSTANCE = Singleton.INSTANCE;
+    /**
+     * Singleton instance.
+     */
+    public static final NoOpVariableExpander INSTANCE = Singleton.INSTANCE;
 
-  private NoOpVariableExpander() {}
+    private NoOpVariableExpander() {
+    }
 
-  /** {@inheritDoc} */
-  @Override
-  public String expandVariables(InvocationContext context, String value) {
-    return value;
-  }
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public String expandVariables(InvocationContext context, String value) {
+        throw new UnsupportedOperationException("STUB: not implemented");
+    }
 
-  /** Singleton holder. */
-  private static final class Singleton {
-    private static final NoOpVariableExpander INSTANCE = new NoOpVariableExpander();
-  }
+    /**
+     * Singleton holder.
+     */
+    private static final class Singleton {
+
+        private static final NoOpVariableExpander INSTANCE = new NoOpVariableExpander();
+    }
 }

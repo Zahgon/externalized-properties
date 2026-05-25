@@ -5,19 +5,24 @@ import io.github.joeljeremy.externalizedproperties.core.Converter;
 import io.github.joeljeremy.externalizedproperties.core.InvocationContext;
 import java.lang.reflect.Type;
 
-/** Supports conversion of values to a boolean/Boolean. */
+/**
+ * Supports conversion of values to a boolean/Boolean.
+ */
 public class BooleanConverter implements Converter<Boolean> {
 
-  /** {@inheritDoc} */
-  @Override
-  public boolean canConvertTo(Class<?> targetType) {
-    return boolean.class.equals(targetType) || Boolean.class.equals(targetType);
-  }
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public boolean canConvertTo(Class<?> targetType) {
+        throw new UnsupportedOperationException("STUB: not implemented");
+    }
 
-  /** {@inheritDoc} */
-  @Override
-  public ConversionResult<Boolean> convert(
-      InvocationContext context, String valueToConvert, Type targetType) {
-    return ConversionResult.of(Boolean.parseBoolean(valueToConvert));
-  }
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public ConversionResult<Boolean> convert(InvocationContext context, String valueToConvert, Type targetType) {
+        throw new UnsupportedOperationException("STUB: not implemented");
+    }
 }

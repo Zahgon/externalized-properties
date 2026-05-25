@@ -12,16 +12,19 @@ import java.util.regex.Pattern;
  */
 public class PatternConverter implements Converter<Pattern> {
 
-  /** {@inheritDoc} */
-  @Override
-  public boolean canConvertTo(Class<?> targetType) {
-    return Pattern.class.equals(targetType);
-  }
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public boolean canConvertTo(Class<?> targetType) {
+        throw new UnsupportedOperationException("STUB: not implemented");
+    }
 
-  /** {@inheritDoc} */
-  @Override
-  public ConversionResult<Pattern> convert(
-      InvocationContext context, String valueToConvert, Type targetType) {
-    return ConversionResult.of(Pattern.compile(valueToConvert));
-  }
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public ConversionResult<Pattern> convert(InvocationContext context, String valueToConvert, Type targetType) {
+        throw new UnsupportedOperationException("STUB: not implemented");
+    }
 }

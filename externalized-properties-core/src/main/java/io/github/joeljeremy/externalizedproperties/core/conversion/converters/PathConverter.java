@@ -7,19 +7,24 @@ import java.lang.reflect.Type;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
-/** Supports conversion of values to a {@link Path}. */
+/**
+ * Supports conversion of values to a {@link Path}.
+ */
 public class PathConverter implements Converter<Path> {
 
-  /** {@inheritDoc} */
-  @Override
-  public boolean canConvertTo(Class<?> targetType) {
-    return Path.class.equals(targetType);
-  }
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public boolean canConvertTo(Class<?> targetType) {
+        throw new UnsupportedOperationException("STUB: not implemented");
+    }
 
-  /** {@inheritDoc} */
-  @Override
-  public ConversionResult<Path> convert(
-      InvocationContext context, String valueToConvert, Type targetType) {
-    return ConversionResult.of(Paths.get(valueToConvert));
-  }
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public ConversionResult<Path> convert(InvocationContext context, String valueToConvert, Type targetType) {
+        throw new UnsupportedOperationException("STUB: not implemented");
+    }
 }
